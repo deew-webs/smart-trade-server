@@ -4,7 +4,7 @@ const Exchange = require('./deew.exchange');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const URL = require('url').Url;
+const url = require('url');
 const Events = require('events');
 const http = require('http');
 const express = require('express');
@@ -18,7 +18,7 @@ app.use(express.json());
 
 app.get('/*', (req, res) =>
 {
-    let link = new URL('http://' + req.get('host') + req.url);
+    let link = new url.URL('http://' + req.get('host') + req.url);
     let thePath = path.join(__dirname, 'public', link.pathname == "/" ? 'index.html' : link.pathname);
     let ext = path.extname(thePath);
     let contentType = deew.ExtToContentType(ext);
