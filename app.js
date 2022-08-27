@@ -18,7 +18,7 @@ app.use(express.json());
 
 app.get('/*', (req, res) =>
 {
-    let link = new URL('http://127.0.0.1' + req.url);
+    let link = new URL('http://' + req.get('host') + req.url);
     let thePath = path.join(__dirname, 'public', link.pathname == "/" ? 'index.html' : link.pathname);
     let ext = path.extname(thePath);
     let contentType = deew.ExtToContentType(ext);
@@ -41,7 +41,7 @@ app.listen(7002, () => console.log(`Example app listening on port 7002!`));
 
 app.post('/API', function (req, res)
 {
-    let link = new URL('http://127.0.0.1' + req.url);
+    let link = new URL('http://' + req.get('host') + req.url);
     if(link.pathname == "/API" || link.pathname == "/API/")
     {
         let resp = HandleAPI(req.body);
