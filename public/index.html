@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Trade</title>
+  <link rel="icon" type="image/ico" href="./assets/image/icon.ico"/>
+  <link rel="stylesheet" href="./assets/css/fonts.css" />
+  <link rel="stylesheet" href="./assets/css/index.css" />
+  <link rel="stylesheet" href="./assets/css/dashboard.css" />
+  <link rel="stylesheet" href="./assets/css/strategy.css" />
+  <link rel="stylesheet" href="./assets/css/account.css" />
+  <link rel="stylesheet" href="./assets/css/options.css" />
+  <link rel="stylesheet" href="./assets/css/sentementic-ui.css" />
+
+  <script type="text/javascript" src="./assets/script/jquery.min.js"></script>
+  <script type="text/javascript" src="./assets/script/jquery-ui.min.js"></script>
+</head>
+
+<body>
+  <div class="App vazir">
+    <div class="ui top attached tabular menu tab-main">
+      <a onclick="doTab('main', 'dashboard')" class="item active" data-tab="dashboard">میزکار</a>
+      <a onclick="doTab('main', 'options')" class="item" data-tab="options">تنظیمات</a>
+      <a onclick="doTab('main', 'strategy')" class="item" data-tab="strategy">استراتژی ها</a>
+      <a onclick="doTab('main', 'account')" class="item" data-tab="account">حساب ها</a>
+      <a onclick="doTab('main', 'history')" class="item" data-tab="history">تاریخچه</a>
+    </div>
+    <div id="tab-dashboard" class="ui bottom attached tab segment segment-main active" data-tab="dashboard">
+      <script> $(function(){ $('#tab-dashboard').load("./screens/dashboard.html", null, () => { DoIT() }); }); </script>
+    </div>
+    <div id="tab-options" class="ui bottom attached tab segment segment-main" data-tab="options">
+      <script> $(function(){ $('#tab-options').load("./screens/options.html"); }); </script>
+    </div>
+    <div id="tab-strategy" class="ui bottom attached tab segment segment-main" data-tab="strategy">
+      <script> $(function(){ $('#tab-strategy').load("./screens/strategy.html"); }); </script>
+    </div>
+    <div id="tab-account" class="ui bottom attached tab segment segment-main" data-tab="account">
+      <script> $(function(){ $('#tab-account').load("./screens/account.html"); }); </script>
+    </div>
+    <div id="tab-history" class="ui bottom attached tab segment segment-main" data-tab="history">
+      <script> $(function(){ $('#tab-history').load("./screens/history.html"); }); </script>
+    </div>
+  </div>
+  <script src="./assets/script/index.js"></script>
+  <script src="./assets/script/dashboard.js"></script>
+  <script src="./assets/script/strategy.js"></script>
+  <script src="./assets/script/chart.js"></script>
+</body>
+
+</html>
