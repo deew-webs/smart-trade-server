@@ -1,61 +1,11 @@
-body
+.col-box-item 
 {
-    background-color: #151924 !important;
-    color: #b2b5be !important;
-    direction: rtl !important;
+    background-color: rgba(255, 255, 255, 0) !important;
+    z-index: 100;
 }
 
-.ui
+.col-box-item :hover
 {
-    direction: rtl !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.item
-{
-    background-color: #151924 !important;
-    color: #b2b5be !important;
-}
-
-.segment
-{
-    background-color: #151924 !important;
-    color: #b2b5be !important;
-    border: 0px !important;
-}
-
-.menu
-{
-    border-color: gray !important;
-}
-
-.active
-{
-    border-color: gray !important;
-}
-
-.dropdown
-{
-    background-color: #151924 !important;
-    color: #b2b5be !important;
-    text-align: center !important;
-}
-
-input
-{
-    background-color: #151924 !important;
-    color: white !important;
-    font-family: 'Vazir' !important;
-    text-align: center !important;
-}
-
-label
-{
-    color: #b2b5be !important;
-}
-
-.vazir
-{
-    direction: rtl;
-    font-family: 'Vazir' !important;
-    font-size: 24px;
-}
