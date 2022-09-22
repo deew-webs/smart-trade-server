@@ -1,5 +1,5 @@
-// deew.node v0.0.2
-
+// deew.node v0.0.3
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 class DEEW
 {
     GetCookieByName(name)
@@ -10,6 +10,14 @@ class DEEW
             return parts.pop().split(';').shift();
         else
             return null;
+    }
+
+    IsNumeric(str)
+    {
+        if (typeof str == "number") return true; // its already a Number!
+        if (typeof str != "string") return false; // we only process strings!  
+        return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+               !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
     }
 
     LoadURL(link, callback)
@@ -23,7 +31,64 @@ class DEEW
             else
                 callback(false, xhr.responseText);
         };
+        xhr.onerror = () =>
+        {
+            callback(false, xhr.responseText);
+        };
         xhr.send();
+    }
+
+    LoadURL_Async(link)
+    {
+        return new Promise((resolve, reject) =>
+        {
+            const http = require('http'), https = require('https');
+    
+            let client = http;
+            if (link.toString().indexOf("https") === 0)
+                client = https;
+    
+            client.get(link, (resp) =>
+            {
+                let data = '';
+    
+                // A chunk of data has been recieved.
+                resp.on('data', (chunk) =>
+                {
+                    data += chunk;
+                });
+    
+                // The whole response has been received. Print out the result.
+                resp.on('end', () => {
+                    resolve(data);
+                });
+    
+            }).on("error", (err) =>
+            {
+                reject(err);
+            });
+        });
+    }
+
+    LoadURL_Async_(link)
+    {
+        return new Promise(callback =>
+            {
+                let xhr = new XMLHttpRequest();
+                xhr.open("GET", link, false);
+                xhr.onload = () =>
+                {
+                    if(xhr.status == 200)
+                        callback(xhr.responseText);
+                    else
+                        callback(xhr.responseText);
+                };
+                xhr.onerror = () =>
+                {
+                    callback(xhr.responseText);
+                };
+                xhr.send();
+            });
     }
 
     PostURL(link, jsonParms, callback)
@@ -40,6 +105,25 @@ class DEEW
             callback(xhr.status, {});
         };
         xhr.send(JSON.stringify(jsonParms));
+    }
+
+    PostURL_Async(link, jsonParms)
+    {
+        return new Promise(callback =>
+            {
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", link, false);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onload = () =>
+                {
+                    callback(xhr.status, JSON.parse(xhr.responseText));
+                };
+                xhr.onerror = () =>
+                {
+                    callback(xhr.status, {});
+                };
+                xhr.send(JSON.stringify(jsonParms));
+            });
     }
 
     ExtToContentType (ext)

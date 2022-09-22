@@ -11,13 +11,13 @@
     float: right;
 }
 
-.myDrag
+.ui-draggable
 {
     position: absolute;
     width: 50px;
     height: 20px;
     color: white;
-    text-align: center;
+    text-align: center !important;
     padding: auto;
     border-radius: 3px;
     font-weight: bold;
@@ -26,16 +26,25 @@
 .d-c-Open
 {
     background-color: #ff9800;
+    z-index: 2;
+}
+
+.d-c-Now
+{
+    background-color: gray;
+    z-index: 1;
 }
 
 .d-c-Tp
 {
     background-color: #089981;
+    z-index: 3;
 }
 
 .d-c-Sp
 {
     background-color: #f23645;
+    z-index: 3;
 }
 
 #myCanvas

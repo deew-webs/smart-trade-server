@@ -1,3 +1,4 @@
+const deew = new DEEW();
 
 // let metaData = {
 //   information:"",
@@ -20,12 +21,14 @@ let info =
   maxDate: "",
 }
 
-var w, h, h_offset;
+var w, h, w_offset, h_offset, x_delay = 50, y_delay = 0;
 var canvas;
 var ctx;
 var centerPoint;
 var boundaries;
-var mypos = [{'side':'Tp', 'price':22520}, {'side':'Open', 'price':22420}, {'side':'Sp', 'price':22300}]
+var _the_symbol = "BTCUSDT", _the_timeframe = "1m";
+var _the_pos = [{'price':19950}, {'price':19680}, {'price':19550}];
+var _the_price = 0;
 
 //amount of grid lines to evenly distribute for each axis
 var xLines = 8;
@@ -34,12 +37,13 @@ var yLines = 10;
 function DoIT()
 {
   canvas = document.getElementById("myCanvas");
+  w_offset = window.innerWidth - document.getElementById("myChart").offsetWidth;
   h_offset = window.innerHeight - document.getElementById("myChart").offsetHeight;
   ResizeChart();
 
   //DownAlphavantage();
   //DownBinance();
-  setInterval(DownBinance, 1000);
+  setInterval(DownBinance, 200);
 
   canvas.addEventListener('mouseleave', function (evt) { UpdateChart(); });
   canvas.addEventListener('mousemove', function (evt) { MouseMove(evt); });
@@ -49,8 +53,9 @@ function DoIT()
 
 function ResizeChart()
 {
-  canvas.width = w = document.getElementById("myChart").parentNode.offsetWidth - 100;
+  //canvas.width = w = document.getElementById("myChart").parentNode.offsetWidth - 100;
   //canvas.height = h = document.getElementById("myChart").parentNode.parentNode.parentNode.parentNode.offsetHeight - 40;
+  canvas.width = w = window.innerWidth - w_offset - 100;
   canvas.height = h = window.innerHeight - h_offset;
   ctx = canvas.getContext("2d");
   centerPoint = [w / 2, h / 2];
@@ -105,7 +110,7 @@ function drawCandles()
     {
       let maxPx = info.yMax[1]
       let x = maxPx - ((price - lp) / (hp - lp) * maxPx);
-      return x;
+      return x - y_delay;
     }
 
     let open = candle[1]
@@ -120,20 +125,20 @@ function drawCandles()
     let closePosition = Math.floor(calculatePosition(close));
 
     //pixel for candle center along x axis
-    let currentStep = Math.floor(idx * timeSlot);
+    let currentStep = Math.floor(idx * timeSlot) - x_delay;
 
     if (openPosition > closePosition) //x,y,w,h
     {
       //deaw cube #089981
       let height = openPosition - closePosition;
       ctx.fillStyle = "#089981";
-      ctx.fillRect(currentStep - 5, closePosition, 10, height);
+      ctx.fillRect(currentStep - 1, closePosition, 2, height);
       //deaw line
       drawLine([currentStep, lowPosition], [currentStep, highPosition], "#089981");
       //deaw border
       ctx.strokeStyle = "#089981"
       ctx.beginPath();
-      ctx.rect(currentStep - 5, closePosition, 10, height);
+      ctx.rect(currentStep - 1, closePosition, 2, height);
       ctx.stroke();
     }
     else
@@ -141,13 +146,13 @@ function drawCandles()
       //deaw cube #f23645
       let height = closePosition - openPosition;
       ctx.fillStyle = "#f23645";
-      ctx.fillRect(currentStep - 5, openPosition, 10, height);
+      ctx.fillRect(currentStep - 1, openPosition, 2, height);
       //deaw line
       drawLine([currentStep, lowPosition], [currentStep, highPosition], "#f23645");
       //deaw border
       ctx.strokeStyle = "#f23645"
       ctx.beginPath();
-      ctx.rect(currentStep - 5, openPosition, 10, height);
+      ctx.rect(currentStep - 1, openPosition, 2, height);
       ctx.stroke();
     }
     candleOhlcMappings.push({ idx: idx, step: currentStep, positions: { openPosition: openPosition, lowPosition: lowPosition, highPosition: highPosition, closePosition: closePosition } });
@@ -314,35 +319,61 @@ function DownBinance()
   if(!itsWorking2)
   {
     itsWorking2 = true;
+    let url = 'https://www.binance.com/fapi/v1/klines?symbol=' + _the_symbol + '&interval=' + _the_timeframe + '&limit=400';
+    /*deew.PostURL(api, {'q':'GET_URL', 'url':url}, (code, res) =>
+    {
+        if(code == 200 && res.ok == true)
+        {*/
+          //d = JSON.parse(res.message);
+          //d = JSON.parse(await deew.PostURL_Async(api, {'q':'GET_URL', 'url':url}));
+          //d = res.message;
+         // console.log(d);
     $.ajax({
-      url: 'https://www.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=5m&limit=100',
+      url: api,
+      type: "POST",
       dataType: 'json',
-      contentType: "application/json",
+      data: JSON.stringify({'q':'GET_OHLCV', 'symbol':_the_symbol, 'timeframe':_the_timeframe}),
+      contentType: "application/json;charset=UTF-8",
       success: function (d)
       {
-        ohlc = [];
-        volume = [];
-
-        d.forEach(item =>
-        {
-          let newOHLC = [Number(item[0]), Number(item[1]), Number(item[2]), Number(item[3]), Number(item[4])];
-          ohlc.push(newOHLC);
-          volume.push([Number(item[0]), Number(item[5])]);
-          
-          if (newOHLC[2] > hp) //found highest point
-            hp = newOHLC[2];
-          if (newOHLC[3] < lp) //found the lowest point
-            lp = newOHLC[3];
-        });
-
-        dateRange[0] = ohlc[0][0];
-        dateRange[1] = ohlc[d.length-1][0];
-
         itsWorking2 = false;
-        UpdateChart();
+
+        if(d.ok && d.message)
+        {
+          d = JSON.parse(d.message);
+          ohlc = [];
+          volume = [];
+
+          d.forEach(item =>
+          {
+            let newOHLC = [Number(item[0]), Number(item[1]), Number(item[2]), Number(item[3]), Number(item[4])];
+            ohlc.push(newOHLC);
+            volume.push([Number(item[0]), Number(item[5])]);
+            
+            if (newOHLC[2] > hp) //found highest point
+              hp = newOHLC[2];
+            if (newOHLC[3] < lp) //found the lowest point
+              lp = newOHLC[3];
+          });
+
+          dateRange[0] = ohlc[0][0];
+          dateRange[1] = ohlc[d.length-1][0];
+          _the_price = ohlc[d.length-1][4];
+          
+          UpdateChart();
+        }
+      },
+      error: function (d)
+      {
+        itsWorking2 = false;
       }
     });
   }
+
+
+      //}
+    //});
+  
 }
 
 
@@ -376,41 +407,64 @@ function DrawTpSpLines()
   let myDrags = document.getElementById('myDrags');
   myDrags.innerHTML = "";
   
-  if(mypos.length >= 3)
+  if(_the_pos.length >= 1)
   {
-    mypos.forEach((line, i) =>
+    _the_pos.forEach((line, i) =>
     {
-      if(line.price < hp && line.price > lp)
-      {
-        let point = (hp - line.price) / (hp - lp) * h;
+      let point = (hp - line.price) / (hp - lp) * h;
       
-        let color = 'green';
-        let ele_id = "d-c-Tp-" + (i+1);
-        let ele_class = "myDrag d-c-Tp ui-draggable";
-        if(i == mypos.length-2)
-        {
-          color = 'orange';
-          ele_id = "d-c-Open";
-          ele_class = "myDrag d-c-Open ui-draggable";
-        }
-        if(i == mypos.length-1)
-        {
-          color = 'red';
-          ele_id = "d-c-Sp";
-          ele_class = "myDrag d-c-Sp ui-draggable";
-        }
+      let color = 'green';
+      let ele_id = "d-c-Tp-" + (i+1);
+      let ele_class = "myDrag d-c-Tp ui-draggable";
+      if(_the_pos.length == 1 || i == _the_pos.length-2)
+      {
+        color = 'orange';
+        ele_id = "d-c-Open";
+        ele_class = "myDrag d-c-Open ui-draggable";
+      }
+      if(_the_pos.length >= 2 && i == _the_pos.length-1)
+      {
+        color = 'red';
+        ele_id = "d-c-Sp";
+        ele_class = "myDrag d-c-Sp ui-draggable";
+      }
+
+      if(line.price < hp && line.price > lp)
         drawLine([0, point], [w, point], color, true);
         
-        let ele = document.createElement("div");
-        ele.setAttribute('id', ele_id);
-        ele.setAttribute('class', ele_class);
-        ele.setAttribute('style', 'top: ' + (point-10) + 'px;');
-        ele.innerText = Math.floor(line.price);
-        myDrags.append(ele);
-      }
+      let point2 = point-10;
+      if(point2 < 0)
+        point2 = 0;
+      if(point2 > h-20)
+        point2 = h-20;
+      let ele = document.createElement("div");
+      ele.setAttribute('id', ele_id);
+      ele.setAttribute('class', ele_class);
+      ele.setAttribute('style', 'top: ' + point2 + 'px;');
+      ele.innerText = Math.floor(line.price);
+      myDrags.append(ele);
     });
-    $(".myDrag").draggable({containment: "parent", start: noop, drag: draged, stop: noop});
   }
+
+
+  //-- draw current price of symbol
+  let point = (hp - _the_price) / (hp - lp) * h;
+  drawLine([0, point], [w, point], 'gray', false);
+
+  let point2 = point-10;
+  if(point2 < 0)
+    point2 = 0;
+  if(point2 > h-20)
+    point2 = h-20;
+  let ele = document.createElement("div");
+  ele.setAttribute('id', 'd-c-Now');
+  ele.setAttribute('class', 'd-c-Now ui-draggable');
+  ele.setAttribute('style', 'top: ' + point2 + 'px;');
+  ele.innerText = Math.floor(_the_price);
+  myDrags.append(ele);
+
+
+  $(".myDrag").draggable({containment: "parent", start: noop, drag: draged, stop: noop});
 }
 
 
@@ -451,11 +505,16 @@ function draged(ev)
     ids = ev.target.getAttribute('id').split('-');
     let line;
     if(ids[2] == 'Open')
-      line = mypos[mypos.length-2];
+    {
+      if(_the_pos.length == 1)
+        line = _the_pos[0];
+      else
+        line = _the_pos[_the_pos.length-2];
+    }
     else if(ids[2] == 'Sp')
-      line = mypos[mypos.length-1];
+      line = _the_pos[_the_pos.length-1];
     else
-      line = mypos[parseInt(ids[3]-1)];
+      line = _the_pos[parseInt(ids[3]-1)];
     
     line.price = linePrice;
     DrawTpSpLines();

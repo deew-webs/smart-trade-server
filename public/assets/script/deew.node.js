@@ -1,4 +1,4 @@
-// deew.node v0.0.2
+// deew.node v0.0.3
 
 class DEEW
 {
@@ -10,6 +10,13 @@ class DEEW
             return parts.pop().split(';').shift();
         else
             return null;
+    }
+
+    IsNumeric(str)
+    {
+        if (typeof str != "string") return false // we only process strings!  
+        return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+               !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
     }
 
     LoadURL(link, callback)
@@ -26,20 +33,59 @@ class DEEW
         xhr.send();
     }
 
+    LoadURL_Async(link)
+    {
+        return new Promise(callback =>
+            {
+                let xhr = new XMLHttpRequest();
+                xhr.open("GET", link, false);
+                xhr.onload = () =>
+                {
+                    if(xhr.status == 200)
+                        callback(true, xhr.responseText);
+                    else
+                        callback(false, xhr.responseText);
+                };
+                xhr.send();
+            });
+    }
+
     PostURL(link, jsonParms, callback)
     {
-        let xhr = new XMLHttpRequest();
-        xhr.open("POST", link, false);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.onload = () =>
-        {
-            callback(xhr.status, JSON.parse(xhr.responseText));
-        };
-        xhr.onerror = () =>
-        {
-            callback(xhr.status, {});
-        };
-        xhr.send(JSON.stringify(jsonParms));
+        $.ajax({
+            url: link,
+            type: "POST",
+            dataType: 'json',
+            data: JSON.stringify(jsonParms),
+            contentType: "application/json;charset=UTF-8",
+            success: function (d)
+            {
+                callback(200, d);
+            },
+            error: function (d)
+            {
+                callback(400, {});
+            }
+          });
+    }
+
+    PostURL_Async(link, jsonParms)
+    {
+        return new Promise(callback =>
+            {
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", link, false);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onload = () =>
+                {
+                    callback(JSON.parse(xhr.responseText));
+                };
+                xhr.onerror = () =>
+                {
+                    callback({});
+                };
+                xhr.send(JSON.stringify(jsonParms));
+            });
     }
 
     ExtToContentType (ext)

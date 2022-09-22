@@ -1,5 +1,5 @@
 const deew = new DEEW();
-var api = window.location.href.replace('/VERIFY', '') + '/API/';
+var api = window.location.href.replace('/VERIFY', '').replace(window.location.hash, "") + '/API/';
 
 document.body.onload = () =>
 {

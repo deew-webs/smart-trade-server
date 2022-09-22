@@ -4,7 +4,12 @@
     z-index: 100;
 }
 
-.col-box-item :hover
+.text-list-title
+{
+    z-index: -100;
+}
+
+.col-box-hover
 {
     background-color: rgba(255, 255, 255, 0.2) !important;
 }
