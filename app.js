@@ -333,6 +333,7 @@ async function HandleAPI(arg)
                             a.closed = false;
                             a.tickerSp = false;
                             a.tickerTp = 1;
+                            a.amount = 0.0;
 
                             let flags = (p.vals.access == "All Account's") ||  (p.vals.access == "Main Account" && a.name == res.value) ||  (p.vals.access == "My Account's" && a.mine)
                             if(a.active && flags && ok)
@@ -341,13 +342,13 @@ async function HandleAPI(arg)
                                     await a.api.setLeverage(p.vals.lev, p.vals.symbol);
                                     
                                     let qtyUsd = a.qty2 == '$' ? a.qty : a.qty * a.balance / 100;
-                                    let amount = qtyUsd / p.vals.entry * p.vals.lev;
+                                    a.amount = qtyUsd / p.vals.entry * p.vals.lev;
                                     
                                     if(p.vals.en_limit)
-                                        a.order = (await a.api.createLimitOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", amount, p.vals.entry)).id;
+                                        a.order = (await a.api.createLimitOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", a.amount, p.vals.entry)).id;
                                     else
                                     {
-                                        a.order = (await a.api.createMarketOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", amount, p.vals.entry)).id;
+                                        a.order = (await a.api.createMarketOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", a.amount, p.vals.entry)).id;
                                         a.filled = true;
                                     }
 
@@ -474,6 +475,10 @@ async function HandleTrades()
                         {
                             a.tickerSp = true;
                             //code order stoploss
+                            const params = {
+                                'triggerPrice': 123.45, // your stop price
+                            }
+                            const order = await exchange.createOrder (p.vals.symbol, 'limit', side, a.amount, price, params)
                         }
                     }
                     else
