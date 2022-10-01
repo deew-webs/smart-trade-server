@@ -20,7 +20,7 @@ var mongo, accounts = [], positions = {}, pids = 0, accsUpdate = false;
 var bin = new ccxt.binance({options:{'defaultType':'future'}});;
 
 
-// mongo startup stuff ...
+// MARK: mongo startup stuff ...
 MongoClient.connect('mongodb://127.0.0.1:27017', async function (err, res)
 {
     try
@@ -130,7 +130,7 @@ app.listen(7002, () => console.log(`> node app listening on port 7002!`));
 
 
 
-// check and response api calls ...
+// MARK: check and response api calls ...
 app.post('/API', async (req, res) =>
 {
     let link = new URL('http://' + req.get('host') + req.url);
@@ -143,7 +143,7 @@ app.post('/API', async (req, res) =>
 });
 
 
-// handle api requests ...
+// MARK: handle api requests ...
 async function HandleAPI(arg)
 {
     while(mongo == null || mongo == undefined) {}
@@ -301,14 +301,13 @@ async function HandleAPI(arg)
                 res = (await configs_.findOne({'name':'main-account'})).value;
                 p.vals = vals;
                 p.accounts = [];
-                p.fill = 0;
                 p.total = 0;
                 
                 ok = deew.IsNumeric(p.vals.lev) && deew.IsNumeric(p.vals.qty);
                 Object.keys(positions).forEach(async (f, i) =>
                 {
-                    let fe = positions[f];
-                    if(fe.vals.symbol == fe.vals.symbol)
+                    let me = positions[f];
+                    if(me.vals.symbol == me.vals.symbol)
                     {
                         job = { "ok": false, "message": "ERROR_SYMBOL_DUPLICATE" };
                         ok = false;
@@ -329,9 +328,11 @@ async function HandleAPI(arg)
                         {
                             acc.balance = (await acc.api.fetchBalance()).USDT.total;
                             let a = {...acc};
-                            p.edited = Date.now();
-                            p.tickerSp = false;
-                            p.tickerTp = 1;
+                            a.edited = Date.now();
+                            a.filled = false;
+                            a.closed = false;
+                            a.tickerSp = false;
+                            a.tickerTp = 1;
 
                             let flags = (p.vals.access == "All Account's") ||  (p.vals.access == "Main Account" && a.name == res.value) ||  (p.vals.access == "My Account's" && a.mine)
                             if(a.active && flags && ok)
@@ -345,7 +346,10 @@ async function HandleAPI(arg)
                                     if(p.vals.en_limit)
                                         a.order = (await a.api.createLimitOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", amount, p.vals.entry)).id;
                                     else
+                                    {
                                         a.order = (await a.api.createMarketOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", amount, p.vals.entry)).id;
+                                        a.filled = true;
+                                    }
 
                                     p.total++;
                                     p.accounts.push(a);
@@ -407,6 +411,7 @@ async function HandleAPI(arg)
 }
 
 
+// MARK: update list of accounts...
 async function UpdateAccounts()
 {
     accsUpdate = false;
@@ -437,42 +442,50 @@ async function UpdateAccounts()
 
 }
 
-
-
+// MARK: handle trades after order recived.
 async function HandleTrades()
 {
     Object.keys(positions).forEach(async (f, i) =>
     {
-        let fe = positions[f];
-        let now = (await bin.fetchTicker (fe.vals.symbol)).close;
+        let p = positions[f];
+        let now = (await bin.fetchTicker (p.vals.symbol)).close;
         let time = Date.now();
-        console.log(fe.vals.symbol, now);
+        console.log(p.vals.symbol, now);
 
-        if(time > fe.edited + 5000)
+        p.accounts.forEach((a, i) =>
         {
-            let itsLong = fe.vals.side == 'LONG';
-
-            if(now < fe.vals.entry == itsLong)
+            if(time > a.edited + 5000)
             {
-                if(!fe.tickerSp)
+                if(!a.filled)
                 {
-
-                    fe.tickerSp = true;
-                }
-            }
-            else
-            {
-                fe.tickerSp = false;
-                for (let i = 1; i <= 10; i++)
-                {
-                    if(fe.vals['tp_p_'+i])
+                    let orderInfo = (await bin.fetchOrder  (a.order, p.vals.symbol));
+                    if(orderInfo.filled == orderInfo.amount)
                     {
-
+                        a.filled = true;
+                    }
+                    a.edited = time;
+                }
+                else
+                {
+                    let itsLong = p.vals.side == 'LONG';
+                    if(now < p.vals.entry == itsLong)
+                    {
+                        if(!a.tickerSp)
+                        {
+                            a.tickerSp = true;
+                            //code order stoploss
+                        }
                     }
                     else
-                        break;
+                    {
+                        if(a.tickerSp)
+                        {
+                            a.tickerSp = false;
+                            //code order target at p.vals['tp_p_'+a.tickerTp]
+                        }
+                    }
                 }
             }
-        }
+        });
     });
 }
