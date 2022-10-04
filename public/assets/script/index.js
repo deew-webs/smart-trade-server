@@ -418,7 +418,7 @@ function funcOpenPosition(side)
 
     let side_factor = (side == "SHORT") ? -1 : 1;
     let sp = entry + (side_factor * entry * strategy['sp'] / 100);
-    let __json = {'q': 'ADD_POSITION', 'session': session, 'symbol': symbol, 'entry': entry, 'side': side, 'qty': qty, 'qty2': qty2, 'lev': lev, 'en_limit': en_limit, 'strategy': strategy_name, 'access': access, 'sp': sp};
+    let __json = {'q': 'ADD_POSITION', 'session': session, 'symbol': symbol, 'entry': entry, 'side': side, 'qty': qty, 'qty2': qty2, 'lev': lev, 'en_limit': en_limit, 'strategy': strategy_name, 's': strategy, 'access': access, 'sp': sp};
     
     for (let i = 1; i <= 10; i++)
     {

@@ -333,7 +333,9 @@ async function HandleAPI(arg)
                             a.closed = false;
                             a.tickerSp = false;
                             a.tickerTp = 1;
-                            a.amount = 0.0;
+                            a.order = {};
+                            a.order2 = {};
+                            a.orderInfo = {};
 
                             let flags = (p.vals.access == "All Account's") ||  (p.vals.access == "Main Account" && a.name == res.value) ||  (p.vals.access == "My Account's" && a.mine)
                             if(a.active && flags && ok)
@@ -342,15 +344,14 @@ async function HandleAPI(arg)
                                     await a.api.setLeverage(p.vals.lev, p.vals.symbol);
                                     
                                     let qtyUsd = a.qty2 == '$' ? a.qty : a.qty * a.balance / 100;
-                                    a.amount = qtyUsd / p.vals.entry * p.vals.lev;
+                                    let amount = qtyUsd / p.vals.entry * p.vals.lev;
                                     
-                                    if(p.vals.en_limit)
-                                        a.order = (await a.api.createLimitOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", a.amount, p.vals.entry)).id;
-                                    else
-                                    {
-                                        a.order = (await a.api.createMarketOrder(p.vals.symbol, p.vals.side == 'LONG' ? "buy" : "sell", a.amount, p.vals.entry)).id;
+                                    let type = p.vals.s.sp_limit ? 'limit' : 'market';
+                                    let side = p.vals.side == 'LONG' ? 'buy' : 'sell';
+                                    a.order = await a.api.createOrder (p.vals.symbol, type, side, amount, p.vals.entry);
+
+                                    if(!p.vals.en_limit)
                                         a.filled = true;
-                                    }
 
                                     p.total++;
                                     p.accounts.push(a);
@@ -459,8 +460,8 @@ async function HandleTrades()
             {
                 if(!a.filled)
                 {
-                    let orderInfo = (await bin.fetchOrder  (a.order, p.vals.symbol));
-                    if(orderInfo.filled == orderInfo.amount)
+                    a.orderInfo = (await bin.fetchOrder  (a.order.id, p.vals.symbol));
+                    if(a.orderInfo.filled == a.orderInfo.amount)
                     {
                         a.filled = true;
                     }
@@ -475,10 +476,10 @@ async function HandleTrades()
                         {
                             a.tickerSp = true;
                             //code order stoploss
-                            const params = {
-                                'triggerPrice': 123.45, // your stop price
-                            }
-                            const order = await exchange.createOrder (p.vals.symbol, 'limit', side, a.amount, price, params)
+                            let params = { 'triggerPrice': now }
+                            let type = p.vals.s.sp_limit ? 'limit' : 'market';
+                            let side = p.vals.side == 'LONG' ? 'sell' : 'buy';
+                            a.order2 = await exchange.createOrder (p.vals.symbol, type, side, a.order.amount, now, params);
                         }
                     }
                     else
