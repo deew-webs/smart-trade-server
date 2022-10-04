@@ -331,8 +331,9 @@ async function HandleAPI(arg)
                             a.edited = Date.now();
                             a.filled = false;
                             a.closed = false;
-                            a.tickerSp = false;
-                            a.tickerTp = 1;
+                            a.wasSp = null;
+                            a.tickerIsSp = null;
+                            a.stepTp = 1;
                             a.order = {};
                             a.order2 = {};
                             a.orderInfo = {};
@@ -470,24 +471,47 @@ async function HandleTrades()
                 else
                 {
                     let itsLong = p.vals.side == 'LONG';
+                    if(a.wasSp != a.tickerIsSp)
+                    {
+                        a.wasSp = a.tickerIsSp;
+
+                        //code delete old order for new order
+                        if(a.order2 != {})
+                        {
+                            await a.api.cancelOrder (a.order2.id, p.vals.symbol);
+                        }
+                    }
+
                     if(now < p.vals.entry == itsLong)
                     {
-                        if(!a.tickerSp)
+                        if(!a.tickerIsSp)
                         {
-                            a.tickerSp = true;
+                            a.tickerIsSp = true;
+
                             //code order stoploss
                             let params = { 'triggerPrice': now }
                             let type = p.vals.s.sp_limit ? 'limit' : 'market';
                             let side = p.vals.side == 'LONG' ? 'sell' : 'buy';
-                            a.order2 = await exchange.createOrder (p.vals.symbol, type, side, a.order.amount, now, params);
+                            a.order2 = await a.api.createOrder (p.vals.symbol, type, side, a.order.amount, now, params);
                         }
                     }
                     else
                     {
-                        if(a.tickerSp)
+                        if(a.tickerIsSp)
                         {
-                            a.tickerSp = false;
-                            //code order target at p.vals['tp_p_'+a.tickerTp]
+                            a.tickerIsSp = false;
+
+                            //code order target at p.vals['tp_p_'+a.stepTp]
+                            if(p.vals['tp_p_'+a.stepTp])
+                            {
+                                let pr = p.vals['tp_p_'+a.stepTp];
+                                let qu = p.vals['tp_q_'+a.stepTp] * a.order.amount / 100;
+    
+                                let params = { 'triggerPrice': pr }
+                                let type = p.vals.s.tp_limit ? 'limit' : 'market';
+                                let side = p.vals.side == 'LONG' ? 'sell' : 'buy';
+                                a.order2 = await a.api.createOrder (p.vals.symbol, type, side, qu, pr, params);
+                            }
                         }
                     }
                 }
